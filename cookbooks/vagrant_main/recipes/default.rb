@@ -26,23 +26,40 @@ execute "make-ssl-cert" do
 end
 
 # Configure sites
-sites = data_bag("sites")
+# sites = data_bag("sites")
 
-sites.each do |name|
-  site = data_bag_item("sites", name)
+# sites.each do |name|
+#   site = data_bag_item("sites", name)
+
+#   # Add site to apache config
+#   web_app site["host"] do
+#     template "sites.conf.erb"
+#     server_name site["host"]
+#     server_aliases site["aliases"]
+#     docroot "/vagrant/public/#{site["host"]}"
+#   end  
+
+#    # Add site info in /etc/hosts
+#    bash "hosts" do
+#      code "echo 127.0.0.1 #{site["host"]} #{site["aliases"].join(' ')} >> /etc/hosts"
+#    end
+# end
+
+node['sites'].each do |site|
 
   # Add site to apache config
-  web_app site["host"] do
+  web_app site[:host] do
     template "sites.conf.erb"
-    server_name site["host"]
-    server_aliases site["aliases"]
-    docroot "/vagrant/public/#{site["host"]}"
+    server_name site[:host]
+    server_aliases site[:aliases]
+    docroot "/vagrant/#{site[:path]}"
   end  
 
-   # Add site info in /etc/hosts
-   bash "hosts" do
-     code "echo 127.0.0.1 #{site["host"]} #{site["aliases"].join(' ')} >> /etc/hosts"
-   end
+  # Add site info in /etc/hosts
+  bash "hosts" do
+   code "echo 127.0.0.1 #{site[:host]} #{site[:aliases].join(' ')} >> /etc/hosts"
+  end
+
 end
 
 # Disable default site

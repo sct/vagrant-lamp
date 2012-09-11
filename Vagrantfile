@@ -17,6 +17,17 @@ Vagrant::Config.run do |config|
     chef.add_recipe "vagrant_main"
 
     chef.json.merge!({
+      "sites" => [
+        { :id => "local",
+          :host => "local.dev",
+          :path => "webroot",
+          :aliases => [
+              "www.local.dev", 
+              "test.com",
+              "www.test.com"
+          ]
+        }
+      ],
       "mysql" => {
         "server_root_password" => "vagrant"
       },
