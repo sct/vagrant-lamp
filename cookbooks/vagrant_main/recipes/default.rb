@@ -6,6 +6,7 @@ require_recipe "apache2::mod_rewrite"
 require_recipe "apache2::mod_ssl"
 require_recipe "mysql::server"
 require_recipe "php"
+require_recipe "php::module_mysql"
 require_recipe "apache2::mod_php5"
 
 # Install packages
