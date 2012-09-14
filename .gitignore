@@ -4,3 +4,6 @@
 # Ignore all sites, but not local.dev
 /sites/*
 !/sites/local.dev
+
+# Ignore personal vagrant config
+Vagranthost.rb

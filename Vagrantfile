@@ -2,13 +2,17 @@
 # vi: set ft=ruby :
 
 Vagrant::Config.run do |config|
-  # Set box configuration
-  config.vm.box = "precise32"
-  config.vm.box_url = "http://files.vagrantup.com/precise32.box"
 
-	# Uncomment these lines to give the virtual machine more memory and "dual core cpu"
-	#config.vm.customize ["modifyvm", :id, "--memory", 1024]
-	#config.vm.customize ["modifyvm", :id, "--cpus", 2]
+	# Set box configuration
+	config.vm.box = "precise32"
+	config.vm.box_url = "http://files.vagrantup.com/precise32.box"
+
+	# Load non-version-controlled host specific config file, if it exists
+	if File.exist?('Vagranthost.rb')
+		require './Vagranthost.rb'
+		hostconfig(config)
+		hostjson = chef_json();
+	end
 
 	# Forward MySql port on 33066, used for connecting admin-clients to localhost:33066
 	config.vm.forward_port 3306, 33066
@@ -16,40 +20,40 @@ Vagrant::Config.run do |config|
 	# Set share folder permissions to 777 so that apache can write files
 	config.vm.share_folder("v-root", "/vagrant", ".", :extra => 'dmode=777,fmode=666')
 
-  # Assign this VM to a host-only network IP, allowing you to access it via the IP.
-  config.vm.network :hostonly, "33.33.33.10"
+	# Assign this VM to a host-only network IP, allowing you to access it via the IP.
+	config.vm.network :hostonly, "33.33.33.10"
 
-  # Enable provisioning with chef solo, specifying a cookbooks path (relative
-  # to this Vagrantfile), and adding some recipes and/or roles.
-  config.vm.provision :chef_solo do |chef|
-    chef.cookbooks_path = "cookbooks"
-    chef.data_bags_path = "data_bags"
-    chef.add_recipe "vagrant_main"
+	# Enable provisioning with chef solo
+	config.vm.provision :chef_solo do |chef|
+		chef.cookbooks_path = "cookbooks"
+		chef.add_recipe "vagrant_main"
 
-    chef.json.merge!({
-      "sites" => [
-        { :id => "local",
-          :host => "local.dev",
-          :path => "webroot",
-          :aliases => [
-              "www.local.dev", 
-              "test.com",
-              "www.test.com"
-          ]
-        }
-      ],
-      "mysql" => {
-        "server_root_password" => "vagrant"
-      },
-      "oh_my_zsh" => {
-        :users => [
-          {
-            :login => 'vagrant',
-            :theme => 'blinks',
-            :plugins => ['git', 'gem']
-          }
-        ]
-      }
-    })
-  end
+		# If we have host specific json, use that
+		if hostjson
+			chef.json.merge!(hostjson)
+		else
+			# Default chef configuration
+			chef.json.merge!({
+				"sites" => [
+					{ 
+						:host => "local.dev",
+						:aliases => [],
+					},
+				],
+				"mysql" => {
+					"server_root_password" => "vagrant"
+				},
+				"oh_my_zsh" => {
+					:users => [
+						{
+							:login => 'vagrant',
+							:theme => 'blinks',
+							:plugins => ['git', 'gem']
+						}
+					]
+				}
+			})
+		end
+
+	end
 end
