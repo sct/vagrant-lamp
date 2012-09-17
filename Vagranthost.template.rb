@@ -11,7 +11,7 @@ def hostconfig(config)
 
 	# Give the virtual machine more memory and "dual core cpu"
 	config.vm.customize ["modifyvm", :id, "--memory", 1024]
-	config.vm.customize ["modifyvm", :id, "--cpus", 1]
+	config.vm.customize ["modifyvm", :id, "--cpus", 2]
 	
 end
 
@@ -20,6 +20,7 @@ end
 def chef_json()
 	return {
 		"sites" => [
+			
 			{ # Site with database
 				:host => "database.dev",
 				:aliases => [],
@@ -54,5 +55,18 @@ def chef_json()
 			}
 
 		],
+
+		"mysql" => {
+			"server_root_password" => "vagrant"
+		},
+		"oh_my_zsh" => {
+			:users => [
+				{
+					:login => 'vagrant',
+					:theme => 'blinks',
+					:plugins => ['git', 'gem']
+				}
+			]
+		}
 	}
 end
