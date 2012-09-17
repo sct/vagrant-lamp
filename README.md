@@ -33,7 +33,7 @@ Installed software:
 
 Apache virtual hosts are created in `sites` folder and configured in your Vagranthost file.
 
-The vagrant machine is set to use IP 33.33.33.10 by default. To use your own domains such as local.dev, you need to add them to your hosts file. If you just go to http://33.33.33.10/ in a browser, you will the first of your defined sites (alphabetical order).
+The vagrant machine is set to use IP 33.33.33.10 by default. To use your own domains such as local.dev, you need to add them to your hosts file. If you just go to http://33.33.33.10/ in a browser, you will see the first of your defined sites (alphabetical order).
 
 Webgrind and phpMyAdmin are available on every domain. For example:
 
@@ -63,23 +63,13 @@ If that does not work, you might have to destroy your virtual machine and recrea
 
 ### Standard site
 
+Put your web app in the folder sites/local.dev for this site configuration to work.
+
 ```ruby
 "sites" => [
 	{ 
-		# Used for ServerName and document root (sites/local.dev)
-		:host => "local.dev", 
-
-		# Used for ServerAlias
-		:aliases => ["example.dev","foo.dev"], 
-
-
-		# The following are not required, but useful
-
-		# Tells apache to use sites/local.dev/webroot as DocumentRoot.
-		:webroot => "webroot", 
-
-		# This triggers some special features for Magento (clear cache, setup cron, etc)
-		:framework => "magento", 
+		:host => "local.dev", # Used for ServerName and document root (sites/local.dev)
+		:aliases => ["example.dev","foo.dev"],
 	}
 ]
 ```
@@ -112,12 +102,12 @@ If that does not work, you might have to destroy your virtual machine and recrea
 ### Automatically sync database from remote server
 Database will be dumped on remote, copied over and imported.
 
-```
+```ruby
 {
 	:host => "sync.dev",
-	:webroot => "webroot",
 	:aliases => [],
-	:framework => "magento",
+	:webroot => "webroot", # Tells apache to use sites/local.dev/webroot as DocumentRoot.
+	:framework => "magento", # Triggers special features for Magento (clear cache, cronjob). 
 	:database => "my_sync",
 	:db_user => "my_sync",
 	:db_pass => "my_sync",
