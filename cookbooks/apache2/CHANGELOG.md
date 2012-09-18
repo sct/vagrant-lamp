@@ -1,5 +1,44 @@
+## v1.1.16:
+
+re-releasing as .16 due to error on tag 1.1.14
+
+* [COOK-1466] - add `mod_auth_cas` recipe
+* [COOK-1609] - apache2 changes ports.conf twice per run when using
+  apache2::mod_ssl
+
+## v1.1.12:
+
+* [COOK-1436] - restore apache2 web_app definition
+* [COOK-1356] - allow ExtendedStatus via attribute
+* [COOK-1403] - add mod_fastcgi recipe
+
+## v1.1.10:
+
+* [COOK-1315] - allow the default site to not be enabled
+* [COOK-1328] - cookbook tests (minitest, cucumber)
+
+## v1.1.8:
+
+* Some platforms with minimal installations that don't have perl won't
+  have a `node['languages']['perl']` attribute, so remove the
+  conditional and rely on the power of idempotence in the package
+  resource.
+* [COOK-1214] - address foodcritic warnings
+* [COOK-1180] - add `mod_logio` and fix `mod_proxy`
+
+## v1.1.6:
+
+FreeBSD users: This release requires the `freebsd` cookbook. See README.md.
+
+* [COOK-1025] - freebsd support in mod_php5 recipe
+
+## v1.1.4:
+
+* [COOK-1100] - support amazon linux
+
 ## v1.1.2:
 
+* [COOK-996] - apache2::mod_php5 can cause PHP and module API mismatches
 * [COOK-1083] - return string for v_f_p and use correct value for
   default
 

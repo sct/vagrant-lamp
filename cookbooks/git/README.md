@@ -3,17 +3,6 @@ Description
 
 Installs git and optionally sets up a git server as a daemon under runit.
 
-Changes
-=======
-
-## v0.10.0:
-
-* [COOK-853] - Git client installation on CentOS
-
-## v0.9.0:
-
-* Current public release.
-
 Requirements
 ============
 
@@ -25,6 +14,21 @@ Requirements
 ## Cookbooks:
 
 * runit
+
+Recipes
+=======
+
+## default
+
+Installs base git packages based on platform.
+
+## server
+
+Sets up a git daemon to provide a server.
+
+## source
+
+Installs git from source.
 
 Usage
 =====
@@ -43,7 +47,7 @@ License and Author
 
 Author:: Joshua Timberman (<joshua@opscode.com>)
 
-Copyright:: 2009, Opscode, Inc
+Copyright:: 2009-2012, Opscode, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
