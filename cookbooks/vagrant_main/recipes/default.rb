@@ -68,6 +68,26 @@ package "php5-curl" do
 	action :install
 end
 
+
+if ( node.include?(:apc_memory) )
+
+	# Install apc
+	template "/etc/php5/conf.d/apc.ini" do
+		source "apc.ini.erb"
+		owner "root"
+		group "root"
+		mode 0644
+		variables(
+			:apc_memory => node[:apc_memory]
+		)
+		action :create
+		notifies :restart, resources("service[apache2]"), :delayed
+	end
+	package "php-apc"
+
+end
+
+
 # Get eth1 ip
 eth1_ip = node[:network][:interfaces][:eth1][:addresses].select{|key,val| val[:family] == 'inet'}.flatten[0]
 
@@ -219,14 +239,14 @@ node['sites'].each do |site|
 
 		if site[:framework] == 'magento' and ( site.include?(:db_import_file) or site.include?(:db_sync) )
 			execute "magento alter database #{site[:database]}" do
-			command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{site[:database]} -e \"" +\
-			"UPDATE core_config_data SET value = 'http://#{site[:host]}/' WHERE path = 'web/unsecure/base_url' ; " +\
-			"UPDATE core_config_data SET value = 'https://#{site[:host]}/' WHERE path = 'web/secure/base_url' ; \" ";
+				command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{site[:database]} -e \"" +\
+				"UPDATE core_config_data SET value = 'http://#{site[:host]}/' WHERE path = 'web/unsecure/base_url' ; " +\
+				"UPDATE core_config_data SET value = 'https://#{site[:host]}/' WHERE path = 'web/secure/base_url' ; \" ";
+			end
 		end
+
+
 	end
-
-
-end
 
 
 end

@@ -1,0 +1,16 @@
+extension=apc.so
+
+apc.enabled=1
+apc.shm_segments=1
+
+; Memory size (32M default)
+apc.shm_size=<%= @apc_memory %>
+
+; Check modified date on files
+apc.stat=1
+
+; Cache files for 24 hours
+apc.ttl=86400
+
+; enable upload progress
+; apc.rfc1867 = 1
