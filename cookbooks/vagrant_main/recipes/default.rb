@@ -7,7 +7,6 @@ require_recipe "apache2::mod_rewrite"
 require_recipe "apache2::mod_ssl"
 require_recipe "mysql::server"
 require_recipe "php"
-require_recipe "php::module_mysql"
 require_recipe "apache2::mod_php5"
 
 # Install packages
@@ -92,6 +91,11 @@ apache_site "default" do
 	enable false  
 end
 
+# Add mysql vagrant user with all permissions
+execute "mysql-vagrant-user" do
+	command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" -e \"GRANT ALL PRIVILEGES ON *.* TO 'vagrant'@'%' IDENTIFIED BY 'vagrant' WITH GRANT OPTION ;\" ";
+end
+
 node['sites'].each do |site|
 
 	if site.include?(:webroot)
@@ -112,11 +116,6 @@ node['sites'].each do |site|
 	bash "hosts" do
 	 code "echo 127.0.0.1 #{site[:host]}  >> /etc/hosts"
 	end
-
-	execute "mysql-vagrant-user" do
-		command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" -e \"GRANT ALL PRIVILEGES ON *.* TO 'vagrant'@'%' IDENTIFIED BY 'vagrant' WITH GRANT OPTION ;\" ";
-	end
-	
 
 	if site[:framework] == 'magento'
 
@@ -179,7 +178,7 @@ node['sites'].each do |site|
 		# Import database
 		if site.include?(:db_import_file)
 
-			execute "load-mysql-#{site[:database]}" do
+			execute "import database #{site[:database]}" do
 				command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{site[:database]} < /vagrant/sites/#{site[:host]}/#{site[:db_import_file]}"
 				only_if "test -f /vagrant/sites/#{site[:host]}/#{site[:db_import_file]}"
 			end
@@ -190,36 +189,35 @@ node['sites'].each do |site|
 		if site.include?(:db_sync)
 
 			# Only done if vagrant-dump-{DB}.sql does not exist
-			execute "load-mysql-#{site[:database]}" do
+			execute "load database #{site[:database]}" do
 				command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{site[:database]} < /home/vagrant/vagrant-dump-#{site[:database]}.sql"
 				only_if "test -f /home/vagrant/vagrant-dump-#{site[:database]}.sql"
+				action :nothing
 			end
-			execute "dump-mysql-#{site[:database]}" do
+			execute "copy database #{site[:database]}" do
 				command \
 					"ssh #{site[:db_sync][:ssh_user]}@#{site[:db_sync][:ssh_host]} -i /vagrant/#{site[:db_sync][:ssh_private_key]} -o StrictHostKeyChecking=no " +\
-					"\"mysqldump -u root -p#{site[:db_sync][:mysql_root_pass]} #{site[:db_sync][:remote_database]} > /tmp/vagrant-dump.sql \" && " +\
+					"\"mysqldump -u#{site[:db_sync][:mysql_user]} -p#{site[:db_sync][:mysql_pass]} #{site[:db_sync][:remote_database]} > /tmp/vagrant-dump.sql \" && " +\
 					"scp -i /vagrant/#{site[:db_sync][:ssh_private_key]} -o StrictHostKeyChecking=no " +\
 					"#{site[:db_sync][:ssh_user]}@#{site[:db_sync][:ssh_host]}:/tmp/vagrant-dump.sql /home/vagrant/vagrant-dump-#{site[:database]}.sql"
 				creates "/home/vagrant/vagrant-dump-#{site[:database]}.sql"
-				notifies :run, "execute[load-mysql-#{site[:database]}]", :immediately
+				notifies :run, "execute[load database #{site[:database]}]", :immediately
 			end
 
 		end
 
 		# Set base url for magento
-		execute "magento-alter-dump" do
+
+		if site[:framework] == 'magento' and ( site.include?(:db_import_file) or site.include?(:db_sync) )
+			execute "magento alter database #{site[:database]}" do
 			command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{site[:database]} -e \"" +\
 			"UPDATE core_config_data SET value = 'http://#{site[:host]}/' WHERE path = 'web/unsecure/base_url' ; " +\
 			"UPDATE core_config_data SET value = 'https://#{site[:host]}/' WHERE path = 'web/secure/base_url' ; \" ";
-			only_if { site[:framework] == 'magento' }
 		end
-
-
 	end
 
 
 end
 
-service "apache2" do
-	notifies :restart, resources(:service => "apache2"), :delayed
+
 end
