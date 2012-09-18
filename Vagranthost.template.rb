@@ -20,7 +20,7 @@ end
 def chef_json()
 	return {
 		"sites" => [
-			
+
 			{ # Site with database
 				:host => "database.dev",
 				:aliases => [],
@@ -56,6 +56,7 @@ def chef_json()
 
 		],
 
+		"tz" => 'Europe/Stockholm',
 		"mysql" => {
 			"server_root_password" => "vagrant"
 		},

@@ -1,4 +1,5 @@
 require_recipe "apt"
+require_recipe "timezone"
 require_recipe "git"
 require_recipe "oh-my-zsh"
 require_recipe "apache2"
