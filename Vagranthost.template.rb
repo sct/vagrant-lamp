@@ -21,14 +21,16 @@ def chef_json()
 	return {
 		"sites" => [
 
-			{ # Site with database
+			{ # Example site with a database
+				:id => "my_site", # Used for filenames, use only a-z, 0-9 and underscores
 				:host => "database.dev",
 				:aliases => [],
 				:database => "my_db",
 				:db_user => "my_db",
 				:db_pass => "my_db",
 			},
-			{ # Site that imports database
+			{ # Example site that imports a database
+				:id => "my_site_import", # Used for filenames, use only a-z, 0-9 and underscores
 				:host => "import.dev",
 				:aliases => [],
 				:database => "my_import",
@@ -36,7 +38,8 @@ def chef_json()
 				:db_pass => "my_import",
 				:db_import_file => "import.sql" # File needs to exist in (sites/import.dev)
 			},
-			{ # Site that imports database from remote host
+			{ # Example site that imports a database from remote host
+				:id => "my_site_sync", # Used for filenames, use only a-z, 0-9 and underscores
 				:host => "sync.dev",
 				:webroot => "webroot",
 				:aliases => [],

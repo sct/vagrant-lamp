@@ -137,14 +137,23 @@ node['sites'].each do |site|
 			only_if "test -d #{site_docroot}/var/cache/";
 		end
 
+		# Add magento cron shell script
+		template "/etc/magento-cron_#{site[:id]}.sh" do
+			source "magento.cron.sh.erb"
+			owner "root"
+			group "root"
+			mode "0700"
+		end
+
 		# Add magento cron
-		template "/etc/cron.d/magento" do
+		template "/etc/cron.d/magento_#{site[:id]}" do
 			source "magento.cron.erb"
 			owner "root"
 			group "root"
 			mode "0600"
 			variables(
-				:magentoroot => site_docroot
+				:cron_sh => "/etc/magento-cron_#{site[:id]}.sh",
+				:cron_php => "#{site_docroot}/cron.php"
 			)
 		end
 
