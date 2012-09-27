@@ -181,71 +181,68 @@ node['sites'].each do |site|
 
 	# Setup database
 	if site.include?(:database)
+		site[:database].each do |db|
 
-		#execute "mysql-install-privileges" do
-		#	command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" < #{node['mysql']['conf_dir']}/grants.sql"
-		#	action :nothing
-		#end
 		template "#{node['mysql']['conf_dir']}/grants.sql" do
 			source "grants.sql.erb"
 			owner "root"
 			group "root"
 			mode "0600"
 			variables(
-				:user     => site[:db_user],
-				:password => site[:db_pass],
-				:database => site[:database]
+					:user     => db[:db_user],
+					:password => db[:db_pass],
+					:database => db[:db_name]
 			)
-			#notifies :run, "execute[mysql-install-privileges]", :immediately
 		end
 
-		execute "create #{site[:database]} database" do
-			command "/usr/bin/mysqladmin -u root -p\"#{node['mysql']['server_root_password']}\" create #{site[:database]}"
-			not_if "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" -e \"SHOW DATABASES LIKE '#{site[:database]}'\" | grep '#{site[:database]}' ";
+			execute "create #{db[:db_name]} database" do
+				command "/usr/bin/mysqladmin -u root -p\"#{node['mysql']['server_root_password']}\" create #{db[:db_name]}"
+				not_if "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" -e \"SHOW DATABASES LIKE '#{db[:db_name]}'\" | grep '#{site[:db_name]}' ";
 		end
 
 		# Import database
-		if site.include?(:db_import_file)
+			if db.include?(:db_import_file)
 
-			execute "import database #{site[:database]}" do
-				command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{site[:database]} < /vagrant/sites/#{site[:host]}/#{site[:db_import_file]}"
-				only_if "test -f /vagrant/sites/#{site[:host]}/#{site[:db_import_file]}"
+				execute "import database #{db[:db_name]}" do
+					command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{db[:db_name]} < /vagrant/sites/#{site[:host]}/#{db[:db_import_file]}"
+					only_if "test -f /vagrant/sites/#{site[:host]}/#{db[:db_import_file]}"
 			end
 
 		end
 
 		# Sync database
-		if site.include?(:db_sync)
+			if db.include?(:db_sync)
 
 			# Only done if vagrant-dump-{DB}.sql does not exist
-			execute "load database #{site[:database]}" do
-				command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{site[:database]} < /home/vagrant/vagrant-dump-#{site[:database]}.sql"
-				only_if "test -f /home/vagrant/vagrant-dump-#{site[:database]}.sql"
+				execute "load database #{db[:db_name]}" do
+					command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{db[:db_name]} < /home/vagrant/vagrant-dump-#{db[:db_name]}.sql"
+					only_if "test -f /home/vagrant/vagrant-dump-#{db[:db_name]}.sql"
 				action :nothing
 			end
-			execute "copy database #{site[:database]}" do
+
+				# Dump and copy database using ssh
+				execute "copy database #{db[:db_name]}" do
 				command \
-					"ssh #{site[:db_sync][:ssh_user]}@#{site[:db_sync][:ssh_host]} -i /vagrant/#{site[:db_sync][:ssh_private_key]} -o StrictHostKeyChecking=no " +\
-					"\"mysqldump -u#{site[:db_sync][:mysql_user]} -p#{site[:db_sync][:mysql_pass]} #{site[:db_sync][:remote_database]} > /tmp/vagrant-dump.sql \" && " +\
-					"scp -i /vagrant/#{site[:db_sync][:ssh_private_key]} -o StrictHostKeyChecking=no " +\
-					"#{site[:db_sync][:ssh_user]}@#{site[:db_sync][:ssh_host]}:/tmp/vagrant-dump.sql /home/vagrant/vagrant-dump-#{site[:database]}.sql"
-				creates "/home/vagrant/vagrant-dump-#{site[:database]}.sql"
-				notifies :run, "execute[load database #{site[:database]}]", :immediately
+						"ssh #{db[:db_sync][:ssh_user]}@#{db[:db_sync][:ssh_host]} -i /vagrant/#{db[:db_sync][:ssh_private_key]} -o StrictHostKeyChecking=no " +\
+						"\"mysqldump -u#{db[:db_sync][:mysql_user]} -p#{db[:db_sync][:mysql_pass]} #{db[:db_sync][:remote_database]} > ~/vagrant-dump.sql \" && " +\
+						"scp -i /vagrant/#{db[:db_sync][:ssh_private_key]} -o StrictHostKeyChecking=no " +\
+						"#{db[:db_sync][:ssh_user]}@#{db[:db_sync][:ssh_host]}:~/vagrant-dump.sql /home/vagrant/vagrant-dump-#{db[:db_name]}.sql"
+					creates "/home/vagrant/vagrant-dump-#{db[:db_name]}.sql"
+					notifies :run, "execute[load database #{db[:db_name]}]", :immediately
 			end
 
 		end
 
 		# Set base url for magento
-
-		if site[:framework] == 'magento' and ( site.include?(:db_import_file) or site.include?(:db_sync) )
-			execute "magento alter database #{site[:database]}" do
-				command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{site[:database]} -e \"" +\
+			if site[:framework] == 'magento' and ( db.include?(:db_import_file) or db.include?(:db_sync) )
+				execute "magento alter database #{db[:db_name]}" do
+					command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{db[:db_name]} -e \"" +\
 				"UPDATE core_config_data SET value = 'http://#{site[:host]}/' WHERE path = 'web/unsecure/base_url' ; " +\
 				"UPDATE core_config_data SET value = 'https://#{site[:host]}/' WHERE path = 'web/secure/base_url' ; \" ";
 			end
 		end
 
-
+		end
 	end
 
 
