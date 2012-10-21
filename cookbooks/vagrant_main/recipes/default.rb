@@ -179,6 +179,21 @@ node['sites'].each do |site|
 
 	end
 
+	# Rsync files
+	if site.include?(:rsync)
+		site[:rsync].each do |rsync|
+
+			# Dump and copy database using ssh
+			execute "rsync files from #{rsync[:remote_source_path]}" do
+				command \
+					"rsync -rt -e 'ssh -i /vagrant/#{rsync[:ssh_private_key]} -o StrictHostKeyChecking=no' " +\
+					"#{rsync[:ssh_user]}@#{rsync[:ssh_host]}:#{rsync[:remote_source_path]} " +\
+					"#{site_docroot}/#{rsync[:local_target_path]}"
+			end
+
+		end
+	end
+
 	# Setup database
 	if site.include?(:database)
 		site[:database].each do |db|
