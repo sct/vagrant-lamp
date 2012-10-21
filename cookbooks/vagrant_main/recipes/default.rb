@@ -9,8 +9,13 @@ require_recipe "mysql::server"
 require_recipe "php"
 require_recipe "apache2::mod_php5"
 
-# Install packages
+# Install extra system packages
 %w{ debconf vim screen mc subversion curl tmux make g++ libsqlite3-dev }.each do |a_package|
+	package a_package
+end
+
+# Install some more LAMP packages
+%w{ drush imagemagick php5-memcache }.each do |a_package|
 	package a_package
 end
 
