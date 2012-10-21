@@ -211,7 +211,7 @@ node['sites'].each do |site|
 		end
 
 		# Sync database
-			if db.include?(:db_sync)
+			if db.include?(:db_copy)
 
 			# Only done if vagrant-dump-{DB}.sql does not exist
 				execute "load database #{db[:db_name]}" do
@@ -223,10 +223,10 @@ node['sites'].each do |site|
 				# Dump and copy database using ssh
 				execute "copy database #{db[:db_name]}" do
 				command \
-						"ssh #{db[:db_sync][:ssh_user]}@#{db[:db_sync][:ssh_host]} -i /vagrant/#{db[:db_sync][:ssh_private_key]} -o StrictHostKeyChecking=no " +\
-						"\"mysqldump -u#{db[:db_sync][:mysql_user]} -p#{db[:db_sync][:mysql_pass]} #{db[:db_sync][:remote_database]} > ~/vagrant-dump.sql \" && " +\
-						"scp -i /vagrant/#{db[:db_sync][:ssh_private_key]} -o StrictHostKeyChecking=no " +\
-						"#{db[:db_sync][:ssh_user]}@#{db[:db_sync][:ssh_host]}:~/vagrant-dump.sql /home/vagrant/vagrant-dump-#{db[:db_name]}.sql"
+						"ssh #{db[:db_copy][:ssh_user]}@#{db[:db_copy][:ssh_host]} -i /vagrant/#{db[:db_copy][:ssh_private_key]} -o StrictHostKeyChecking=no " +\
+						"\"mysqldump --routines -u#{db[:db_copy][:mysql_user]} -p#{db[:db_copy][:mysql_pass]} #{db[:db_copy][:remote_database]} > ~/vagrant-dump.sql \" && " +\
+						"scp -i /vagrant/#{db[:db_copy][:ssh_private_key]} -o StrictHostKeyChecking=no " +\
+						"#{db[:db_copy][:ssh_user]}@#{db[:db_copy][:ssh_host]}:~/vagrant-dump.sql /home/vagrant/vagrant-dump-#{db[:db_name]}.sql"
 					creates "/home/vagrant/vagrant-dump-#{db[:db_name]}.sql"
 					notifies :run, "execute[load database #{db[:db_name]}]", :immediately
 			end
@@ -234,7 +234,7 @@ node['sites'].each do |site|
 		end
 
 		# Set base url for magento
-			if site[:framework] == 'magento' and ( db.include?(:db_import_file) or db.include?(:db_sync) )
+			if site[:framework] == 'magento' and ( db.include?(:db_import_file) or db.include?(:db_copy) )
 				execute "magento alter database #{db[:db_name]}" do
 					command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{db[:db_name]} -e \"" +\
 				"UPDATE core_config_data SET value = 'http://#{site[:host]}/' WHERE path = 'web/unsecure/base_url' ; " +\

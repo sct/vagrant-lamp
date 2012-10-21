@@ -99,25 +99,25 @@ Put your web app in the folder sites/local.dev for this site configuration to wo
 }
 ```
 
-### Automatically sync database from remote server
+### Automatically copy database from remote server
 Database will be dumped on remote, copied over and imported.
 
 ```ruby
 {
-	:host => "sync.dev",
+	:host => "copy.dev",
 	:aliases => [],
 	:webroot => "webroot", # Tells apache to use sites/local.dev/webroot as DocumentRoot.
 	:framework => "magento", # Triggers special features for Magento (clear cache, cronjob). 
-	:database => "my_sync",
-	:db_user => "my_sync",
-	:db_pass => "my_sync",
-	:db_sync => { # All fields below are required
+	:database => "my_copy",
+	:db_user => "my_copy",
+	:db_pass => "my_copy",
+	:db_copy => { # All fields below are required
 		:ssh_host => "sync.example.com",
 		:ssh_user => "vagrant",
 		:ssh_private_key => "vagrant_id_rsa", # This file must exist in vagrant root.
 		:mysql_user => "root",
 		:mysql_pass => "password",
-		:remote_database => "my_sync"
+		:remote_database => "my_copy"
 	}
 }
 ```
