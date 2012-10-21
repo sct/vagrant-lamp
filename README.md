@@ -1,6 +1,6 @@
 # Vagrant LAMP
 
-A configurable LAMP development stack for Vagrant.
+Configurable LAMP development stack for Vagrant.
 
 ## Installation
 
@@ -33,7 +33,9 @@ Installed software:
 
 Apache virtual hosts are created in `sites` folder and configured in your Vagranthost file.
 
-The vagrant machine is set to use IP 33.33.33.10 by default. To use your own domains such as local.dev, you need to add them to your hosts file. If you just go to http://33.33.33.10/ in a browser, you will see the first of your defined sites (alphabetical order).
+The vagrant machine is set to use IP 33.33.33.10 by default. To use your own domains such as local.dev, you need to add this line to your /etc/hosts (or windows equivalent).
+
+    33.33.33.10 local.dev project.dev project2.dev
 
 Webgrind and phpMyAdmin are available on every domain. For example:
 
@@ -45,6 +47,8 @@ PHP is configured to send mail via MailCatcher. Web frontend of MailCatcher is r
 * http://local.dev:1080
 
 Port 33066 is forwarded to MySql, with a default vagrant/vagrant user so you can use your favorite client to administer databases.
+
+You can add XDEBUG_PROFILE to your GET parameter to generate an xdebug trace, e.g. http://local.dev/?XDEBUG_PROFILE. You can then investigate at http://local.dev/webgrind/
 
 
 ## Sites configuration

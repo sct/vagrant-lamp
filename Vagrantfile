@@ -1,6 +1,8 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# This file should not contain any host/install specific info, put that into Vagranthost.rb
+
 Vagrant::Config.run do |config|
 
 	# Set box configuration
@@ -20,6 +22,10 @@ Vagrant::Config.run do |config|
 	# Set share folder permissions to 777 so that apache can write files
 	config.vm.share_folder("v-root", "/vagrant", ".", :extra => 'dmode=777,fmode=666')
 
+	# If you want to share using NFS uncomment this line (30x faster performance on mac/linux hosts)
+	# http://vagrantup.com/v1/docs/nfs.html
+	#config.vm.share_folder("v-root", "/vagrant", ".", :nfs => true)
+
 	# Assign this VM to a host-only network IP, allowing you to access it via the IP.
 	config.vm.network :hostonly, "33.33.33.10"
 
@@ -32,7 +38,7 @@ Vagrant::Config.run do |config|
 		if hostjson
 			chef.json.merge!(hostjson)
 		else
-			# Default chef configuration
+			# Default chef configuration, replaced by Vagranthost.rb
 			chef.json.merge!({
 				"sites" => [
 					{ 
