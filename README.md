@@ -84,9 +84,11 @@ Put your web app in the folder sites/local.dev for this site configuration to wo
 {
 	:host => "database.dev",
 	:aliases => [],
-	:database => "my_db",
-	:db_user => "my_db",
-	:db_pass => "my_db",
+	:database => [{
+		:db_name => "my_db",
+		:db_user => "my_db",
+		:db_pass => "my_db",
+	}]
 }
 ```
 
@@ -96,10 +98,12 @@ Put your web app in the folder sites/local.dev for this site configuration to wo
 {
 	:host => "import.dev",
 	:aliases => [],
-	:database => "my_import",
-	:db_user => "my_import",
-	:db_pass => "my_import",
-	:db_import_file => "import.sql" # File needs to exist in (sites/import.dev)
+	:database => [{
+		:db_name => "my_import",
+		:db_user => "my_import",
+		:db_pass => "my_import",
+		:db_import_file => "import.sql" # File needs to exist in (sites/import.dev)
+	}]
 }
 ```
 
@@ -112,17 +116,19 @@ Database will be dumped on remote, copied over and imported.
 	:aliases => [],
 	:webroot => "webroot", # Tells apache to use sites/local.dev/webroot as DocumentRoot.
 	:framework => "magento", # Triggers special features for Magento (clear cache, cronjob). 
-	:database => "my_copy",
-	:db_user => "my_copy",
-	:db_pass => "my_copy",
-	:db_copy => { # All fields below are required
-		:ssh_host => "sync.example.com",
-		:ssh_user => "vagrant",
-		:ssh_private_key => "vagrant_id_rsa", # This file must exist in vagrant root.
-		:mysql_user => "root",
-		:mysql_pass => "password",
-		:remote_database => "my_copy"
-	}
+	:database => [{
+		:db_name => "my_copy",
+		:db_user => "my_copy",
+		:db_pass => "my_copy",
+		:db_copy => { # All fields below are required
+			:ssh_host => "sync.example.com",
+			:ssh_user => "vagrant",
+			:ssh_private_key => "vagrant_id_rsa", # This file must exist in vagrant root.
+			:mysql_user => "root",
+			:mysql_pass => "password",
+			:remote_database => "my_copy"
+		}
+	}]
 }
 ```
 
