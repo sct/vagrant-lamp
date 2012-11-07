@@ -4,18 +4,20 @@ Configurable LAMP development stack for Vagrant.
 
 ## Installation
 
-Install [vagrant](http://vagrantup.com/)
+1. Install vagrant from [vagrantup.com](http://vagrantup.com/)
+2. Download and Install VirtualBox from [virtualbox.org](http://www.virtualbox.org/)
+3. Clone this repository to a folder of your choice (I have it in my home folder)
+4. (Optional) Duplicate Vagranthost.template.rb to Vagranthost.rb and configure your sites.
+5. Setup your hosts file with the domains you need
 
-    $ gem install vagrant
-
-Download and Install [VirtualBox](http://www.virtualbox.org/)
-
-Clone this repository
-
-Go to the repository folder and launch the box
-
-    $ cd [repo]
-    $ vagrant up
+	```33.33.33.10 local.dev project.dev project2.dev```
+	
+6. Go to the repository folder and launch the box
+  
+  ```
+  $ cd [repo]
+  $ vagrant up
+  ```
 
 ## What's inside
 
