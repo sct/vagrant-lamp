@@ -74,7 +74,7 @@ Put your web app in the folder ```sites/local.dev/``` for this site configuratio
 ```json
 {
 	"id": "local",
-	"host": "local.dev", // Used for ServerName and document root (sites/local.dev)
+	"host": "local.dev",
 	"aliases": [ "example.dev", "foo.dev" ]
 }
 ```
@@ -107,33 +107,35 @@ Put your web app in the folder ```sites/import.dev/```. You also need a database
 		"db_name": "my_import",
 		"db_user": "my_import",
 		"db_pass": "my_import",
-		"db_import_file": "import.sql" // File needs to exist in (sites/import.dev)
+		"db_import_file": "import.sql"
 	}]
 }
 ```
 
 ### Automatically copy database from remote server
 
-For this config to work you need an SSH account on a remote server and a MySQL account. For the SSH account you must have Public Key Authentication set up and your private key file needs to exist in the root vagrant directory.
+For this config to work you need an SSH account on a remote server and a MySQL account. For the SSH account you must have Public Key Authentication set up and your private key file needs to exist in the root vagrant directory. All settings under "db_copy" are required.
 
-I use a single private key file without a passphrase for all the servers I need to sync databases and files from. This is a separate private key from the one I usually use, since it has no passphrase it is best to use it only for syncing from development and testing servers.
+I use a single private key file without a passphrase for all the servers I need to sync databases and files from. This is a separate private key from the one I usually use, since it has no passphrase it is best to use it only for syncing from development and testing servers. Read more about public and private keys at [help.ubuntu.com](https://help.ubuntu.com/community/SSH/OpenSSH/Keys).
 
-Read more about public and private keys at [help.ubuntu.com](https://help.ubuntu.com/community/SSH/OpenSSH/Keys).
+In this config I also use the "webroot" to define that apache should use ```sites/copy.dev/webroot/``` as the DocumentRoot. By default ```sites/copy.dev/``` would be used.
+
+The "framework" is also set, this triggers some extra features, see "Supported frameworks" below.
 
 ```json
 {
 	"id": "copy",
 	"host": "copy.dev",
-	"webroot": "webroot", // Tells apache to use sites/local.dev/webroot as DocumentRoot.
-	"framework": "magento", // Triggers special features for Magento (clear cache, cronjob). 
+	"webroot": "webroot",
+	"framework": "magento",
 	"database": [{
 		"db_name": "my_copy",
 		"db_user": "my_copy",
 		"db_pass": "my_copy",
-		"db_copy": { // All fields below are required
+		"db_copy": {
 			"ssh_host": "sync.example.com",
 			"ssh_user": "vagrant",
-			"ssh_private_key": "vagrant_id_rsa", // This file must exist in vagrant root.
+			"ssh_private_key": "vagrant_id_rsa",
 			"mysql_user": "root",
 			"mysql_pass": "password",
 			"remote_database": "my_copy"
