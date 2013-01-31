@@ -131,7 +131,7 @@ end
 
 sites.each do |name|
 	if name == nil
-		puts "Site name is nil. Your json config file must contain an \"id\" property."
+		puts "Site id is nil. Your json config file must contain an \"id\" property."
 		next
 	end
 
@@ -297,7 +297,7 @@ sites.each do |name|
 			# Set up wordpress alter to run last after new database
 			execute "wordpress alter database #{db['db_name']}" do
 				command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{db['db_name']} -e \"" +\
-				"UPDATE #{db_prefix}options SET option_value = 'http://#{site['host']}' WHERE option_name = 'siteurl';\" ";
+				"UPDATE #{db_prefix}options SET option_value = 'http://#{site['host']}' WHERE option_name IN ('siteurl','home');\" ";
 				only_if { site['framework'] == 'wordpress' }
 				subscribes :run, resources("execute[create database #{db['db_name']}]"), :immediately
 			end
@@ -308,7 +308,7 @@ sites.each do |name|
 	# Clear cache using drush for drupal
 	if site['framework'] == 'drupal'
 		execute "drupal clear cache - #{site['host']}" do
-			command "cd #{site_docroot} && drush cc all";
+			command "drush -r #{site_docroot} cc all";
 		end
 	end
 
