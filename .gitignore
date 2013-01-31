@@ -9,6 +9,10 @@
 /databags/sites/*
 !/databags/sites/vagrant.json
 
+# Librarian
+/cookbooks/
+/tmp/
+
 
 # Ignore deploy folder, I use it for symlinking in wordpress stuff
 /deploy/

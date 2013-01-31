@@ -3,6 +3,10 @@
 
 Vagrant::Config.run do |config|
 
+	#################################
+  # Base box and vm configuration #
+  #################################
+
 	# Set base box to be used
 	config.vm.box = "precise32"
 
@@ -37,20 +41,52 @@ Vagrant::Config.run do |config|
 	config.vm.customize ["modifyvm", :id, "--nictype2", "virtio"]
 	config.vm.customize ["storagectl", :id, "--name", "SATA Controller", "--hostiocache", "off"]
 
-	# Enable provisioning with chef solo
+
+  #################################
+  # Librarian                     #
+  #################################
+
+	# Only run if "up" was called
+  if ARGV.first == "up"
+
+    # Path to our cookbooks folder
+    cookbooks_path = File.expand_path(File.dirname(__FILE__)) + "/cookbooks"
+
+    # Run librarian if cookbooks folder does not exist or is empty
+    if !Dir::exists?(cookbooks_path) || (Dir.entries(cookbooks_path).size < 3)
+      puts 'Running "librarian-chef install"...'
+      puts `librarian-chef install`
+    end
+  end
+
+
+  #################################
+  # Provisioners                  #
+  #################################
+
 	config.vm.provision :chef_solo do |chef|
-		chef.cookbooks_path = "cookbooks"
+
+		# The librarian gem controls the "cookbook" folder, do not touch it. If you
+    # need to create site-specific cookbooks, place them in "site-cookbooks".
+		chef.cookbooks_path = ["cookbooks", "cookbooks-custom"]
+
+		# Path to data bags (our sites config)
 		chef.data_bags_path = "databags"
+
+		# Default top level chef recipe
 		chef.add_recipe "vagrant_main"
 
 		#chef.log_level = "debug"
 
-		# Default chef configuration
+		# Custom chef json configuration
 		chef.json.merge!({
-			"mysql" => {
-				"server_root_password" => "vagrant"
+			:tz => 'Europe/Stockholm',
+			:mysql => {
+				"server_root_password" => "vagrant",
+				"server_debian_password" => "vagrant",
+				"server_repl_password" => "vagrant"
 			},
-			"oh_my_zsh" => {
+			:oh_my_zsh => {
 				:users => [
 					{
 						:login => 'vagrant',
