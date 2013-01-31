@@ -1,26 +1,28 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# This file should not contain any host/install specific info, put that into Vagranthost.rb
-
 Vagrant::Config.run do |config|
 
-	# Set box configuration
+	# Set base box to be used
 	config.vm.box = "precise32"
+
+	# Url of base box in case vagrant needs to download it
 	config.vm.box_url = "http://files.vagrantup.com/precise32.box"
 
-	# Load non-version-controlled host specific config file, if it exists
-	if File.exist?('Vagranthost.rb')
-		require './Vagranthost.rb'
-		hostconfig(config)
-		hostjson = chef_json();
-	end
+	# Set the vm's host name.
+	config.vm.host_name = "vagrant-lamp"
+
+	# If you give the VM more than 1 cpu, it might lose 100x performance.
+	config.vm.customize ["modifyvm", :id, "--cpus", 1]
+
+	# Set the memory size (RAM)
+	config.vm.customize ["modifyvm", :id, "--memory", 512]
 
 	# Forward MySql port on 33066, used for connecting admin-clients to localhost:33066
-	config.vm.forward_port 3306, 33066
+	#config.vm.forward_port 3306, 33066
 
 	# Set share folder permissions to 777 so that apache can write files
-	config.vm.share_folder("v-root", "/vagrant", ".", :extra => 'dmode=777,fmode=666')
+	#config.vm.share_folder("v-root", "/vagrant", ".", :extra => 'dmode=777,fmode=666')
 
 	# If you want to share using NFS uncomment this line (30x faster performance on mac/linux hosts)
 	# http://vagrantup.com/v1/docs/nfs.html
@@ -32,34 +34,26 @@ Vagrant::Config.run do |config|
 	# Enable provisioning with chef solo
 	config.vm.provision :chef_solo do |chef|
 		chef.cookbooks_path = "cookbooks"
+		chef.data_bags_path = "databags"
 		chef.add_recipe "vagrant_main"
 
-		# If we have host specific json, use that
-		if hostjson
-			chef.json.merge!(hostjson)
-		else
-			# Default chef configuration, replaced by Vagranthost.rb
-			chef.json.merge!({
-				"sites" => [
-					{ 
-						:host => "local.dev",
-						:aliases => [],
-					},
-				],
-				"mysql" => {
-					"server_root_password" => "vagrant"
-				},
-				"oh_my_zsh" => {
-					:users => [
-						{
-							:login => 'vagrant',
-							:theme => 'blinks',
-							:plugins => ['git', 'gem']
-						}
-					]
-				}
-			})
-		end
+		#chef.log_level = :debug # if !(ENV['CHEF_LOG']).nil?
+
+		# Default chef configuration
+		chef.json.merge!({
+			"mysql" => {
+				"server_root_password" => "vagrant"
+			},
+			"oh_my_zsh" => {
+				:users => [
+					{
+						:login => 'vagrant',
+						:theme => 'blinks',
+						:plugins => ['git', 'gem']
+					}
+				]
+			}
+		})
 
 	end
 end

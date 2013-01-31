@@ -121,28 +121,55 @@ execute "mysql-vagrant-user" do
 	command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" -e \"GRANT ALL PRIVILEGES ON *.* TO 'vagrant'@'%' IDENTIFIED BY 'vagrant' WITH GRANT OPTION ;\" ";
 end
 
-node['sites'].each do |site|
+# Initialize sites data bag
+sites = []
+begin
+	sites = data_bag('sites')
+rescue
+	puts "Sites data bag is empty"
+end
 
-	if site.include?(:webroot)
-		site_docroot = "/vagrant/sites/#{site[:host]}/#{site[:webroot]}"
+sites.each do |name|
+	if name == nil
+		puts "Site name is nil? Skipping..."
+		p sites
+		next
+	end
+
+	# Load data bag item
+	site = data_bag_item('sites', name)
+	if !site.include?('host')
+		puts "Site #{name} has no host defined"
+		next
+	end
+
+	if site.include?('webroot')
+		site_docroot = "/vagrant/sites/#{site['host']}/#{site['webroot']}"
 	else
-		site_docroot = "/vagrant/sites/#{site[:host]}"
+		site_docroot = "/vagrant/sites/#{site['host']}"
+	end
+
+	# Verify that aliases exists and is an array
+	if site.include?('aliases') && site['aliases'].respond_to?('each')
+		aliases = site['aliases']
+	else
+		aliases = []
 	end
 
 	# Add site to apache config
-	web_app site[:host] do
+	web_app site['host'] do
 		template "sites.conf.erb"
-		server_name site[:host]
-		server_aliases site[:aliases]
+		server_name site['host']
+		server_aliases aliases
 		docroot site_docroot
 	end
 
 	# Add site info in /etc/hosts
 	bash "hosts" do
-	 code "echo 127.0.0.1 #{site[:host]}  >> /etc/hosts"
+	 code "echo 127.0.0.1 #{site['host']}  >> /etc/hosts"
 	end
 
-	if site[:framework] == 'magento'
+	if site['framework'] == 'magento'
 
 		# Create magento settings file
 		# template "#{site[:path]}/app/etc/local.xml" do
@@ -163,7 +190,7 @@ node['sites'].each do |site|
 		end
 
 		# Add magento cron shell script
-		template "/etc/magento-cron_#{site[:id]}.sh" do
+		template "/etc/magento-cron_#{name}.sh" do
 			source "magento.cron.sh.erb"
 			owner "root"
 			group "root"
@@ -171,13 +198,13 @@ node['sites'].each do |site|
 		end
 
 		# Add magento cron
-		template "/etc/cron.d/magento_#{site[:id]}" do
+		template "/etc/cron.d/magento_#{name}" do
 			source "magento.cron.erb"
 			owner "root"
 			group "root"
 			mode "0600"
 			variables(
-				:cron_sh => "/etc/magento-cron_#{site[:id]}.sh",
+				:cron_sh => "/etc/magento-cron_#{name}.sh",
 				:cron_php => "#{site_docroot}/cron.php"
 			)
 		end
@@ -185,8 +212,8 @@ node['sites'].each do |site|
 	end
 
 	# Rsync files
-	if site.include?(:rsync)
-		site[:rsync].each do |rsync|
+	if site.include?('rsync')
+		site['rsync'].each do |rsync|
 
 			# Dump and copy database using ssh
 			execute "rsync files from #{rsync[:ssh_host]}" do
@@ -200,8 +227,8 @@ node['sites'].each do |site|
 	end
 
 	# Setup database
-	if site.include?(:database)
-		site[:database].each do |db|
+	if site.include?('database')
+		site['database'].each do |db|
 
 			template "#{node['mysql']['conf_dir']}/grants.sql" do
 				source "grants.sql.erb"
@@ -218,16 +245,16 @@ node['sites'].each do |site|
 			# Create database, if it doesn't exist
 			execute "create database #{db[:db_name]}" do
 				command "/usr/bin/mysqladmin -u root -p\"#{node['mysql']['server_root_password']}\" create #{db[:db_name]}"
-				not_if "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" -e \"SHOW DATABASES LIKE '#{db[:db_name]}'\" | grep '#{site[:db_name]}' ";
+				not_if "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" -e \"SHOW DATABASES LIKE '#{db[:db_name]}'\" | grep '#{site['db_name']}' ";
 			end
 
 			if db.include?(:db_import_file)
 				# Import database if needed
-				execute "import database #{db[:db_name]}" do
-					command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{db[:db_name]} < /vagrant/sites/#{site[:host]}/#{db[:db_import_file]}"
-					only_if "test -f /vagrant/sites/#{site[:host]}/#{db[:db_import_file]}"
+				execute "import database #{db['db_name']}" do
+					command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{db[:db_name]} < /vagrant/sites/#{site['host']}/#{db[:db_import_file]}"
+					only_if "test -f /vagrant/sites/#{site['host']}/#{db[:db_import_file]}"
 					action :nothing
-  				subscribes :run, resources("execute[create database #{db[:db_name]}]"), :immediately
+					subscribes :run, resources("execute[create database #{db[:db_name]}]"), :immediately
 				end
 			end
 
@@ -240,7 +267,7 @@ node['sites'].each do |site|
 						"scp -i /vagrant/#{db[:db_copy][:ssh_private_key]} -o StrictHostKeyChecking=no " +\
 						"#{db[:db_copy][:ssh_user]}@#{db[:db_copy][:ssh_host]}:~/vagrant-dump-#{db[:db_name]}.sql /home/vagrant/vagrant-dump-#{db[:db_name]}.sql"
 					notifies :run, "execute[load database #{db[:db_name]}]", :immediately
-  				subscribes :run, resources("execute[create database #{db[:db_name]}]"), :immediately
+					subscribes :run, resources("execute[create database #{db[:db_name]}]"), :immediately
 					action :nothing
 				end
 				# Once copied, import it
@@ -260,26 +287,26 @@ node['sites'].each do |site|
 			# Set up magento alter to run last after new database
 			execute "magento alter database #{db[:db_name]}" do
 				command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{db[:db_name]} -e \"" +\
-				"UPDATE #{db_prefix}core_config_data SET value = 'http://#{site[:host]}/' WHERE path = 'web/unsecure/base_url' ; " +\
-				"UPDATE #{db_prefix}core_config_data SET value = 'https://#{site[:host]}/' WHERE path = 'web/secure/base_url' ; \" ";
-				only_if { site[:framework] == 'magento' }
-  			subscribes :run, resources("execute[create database #{db[:db_name]}]"), :immediately
+				"UPDATE #{db_prefix}core_config_data SET value = 'http://#{site['host']}/' WHERE path = 'web/unsecure/base_url' ; " +\
+				"UPDATE #{db_prefix}core_config_data SET value = 'https://#{site['host']}/' WHERE path = 'web/secure/base_url' ; \" ";
+				only_if { site['framework'] == 'magento' }
+				subscribes :run, resources("execute[create database #{db[:db_name]}]"), :immediately
 			end
 
 			# Set up wordpress alter to run last after new database
 			execute "wordpress alter database #{db[:db_name]}" do
 				command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{db[:db_name]} -e \"" +\
-				"UPDATE #{db_prefix}options SET option_value = 'http://#{site[:host]}' WHERE option_name = 'siteurl';\" ";
-				only_if { site[:framework] == 'wordpress' }
-  			subscribes :run, resources("execute[create database #{db[:db_name]}]"), :immediately
+				"UPDATE #{db_prefix}options SET option_value = 'http://#{site['host']}' WHERE option_name = 'siteurl';\" ";
+				only_if { site['framework'] == 'wordpress' }
+				subscribes :run, resources("execute[create database #{db[:db_name]}]"), :immediately
 			end
 
 		end
 	end
 
 	# Clear cache using drush for drupal
-	if site[:framework] == 'drupal'
-		execute "drupal clear cache - #{site[:host]}" do
+	if site['framework'] == 'drupal'
+		execute "drupal clear cache - #{site['host']}" do
 			command "cd #{site_docroot} && drush cc all";
 		end
 	end
