@@ -54,7 +54,7 @@ You can add XDEBUG\_PROFILE to your GET parameter to generate an xdebug trace, e
 
 ## Sites configuration
 
-Site configurations are stored as json files in the folder databag/site. These configs automatically set up apache virtual hosts and databases. They can also import databases and rsync uploaded files from a remote server. See examples below.
+Site configurations are stored as json files in the folder ```databags/sites/```. These configs automatically set up apache virtual hosts and databases. They can also import databases and rsync uploaded files from a remote server. See examples below.
 
 Whenever you need to apply new configurations all you need to do is run the provisioning again.
 
