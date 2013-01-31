@@ -34,7 +34,7 @@ Vagrant::Config.run do |config|
 	# Enable provisioning with chef solo
 	config.vm.provision :chef_solo do |chef|
 		chef.cookbooks_path = "cookbooks"
-		chef.data_bags_path = "databags"
+		chef.data_bags_path = "databag"
 		chef.add_recipe "vagrant_main"
 
 		#chef.log_level = :debug # if !(ENV['CHEF_LOG']).nil?

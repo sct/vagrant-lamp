@@ -1,9 +1,10 @@
 # Ignore current running vagrant info
 .vagrant
 
-# Ignore all sites, but not local.dev
+# Ignore all sites, but not vagrant.dev
 /sites/*
-!/sites/local.dev
+!/sites/vagrant.dev
 
-# Ignore personal vagrant config
-Vagranthost.rb
+# Ignore all databag configs, but not vagrant.dev
+/databag/site/*
+!/databag/site/vagrant.json
