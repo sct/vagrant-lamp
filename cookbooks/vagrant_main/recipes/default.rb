@@ -249,7 +249,7 @@ sites.each do |name|
 				not_if "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" -e \"SHOW DATABASES LIKE '#{db['db_name']}'\" | grep '#{site['db_name']}' ";
 			end
 
-			if db.include?(:db_import_file)
+			if db.include?('db_import_file')
 				# Import database if needed
 				execute "import database #{db['db_name']}" do
 					command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" #{db['db_name']} < /vagrant/sites/#{site['host']}/#{db['db_import_file']}"
@@ -259,7 +259,7 @@ sites.each do |name|
 				end
 			end
 
-			if db.include?(:db_copy)
+			if db.include?('db_copy')
 				# Dump and copy database if needed
 				execute "copy database #{db['db_name']}" do
 					command \
@@ -279,7 +279,7 @@ sites.each do |name|
 				end
 			end
 
-			if db.include?(:db_prefix)
+			if db.include?('db_prefix')
 				db_prefix = "#{db['db_prefix']}_"
 			else
 				db_prefix = ""
