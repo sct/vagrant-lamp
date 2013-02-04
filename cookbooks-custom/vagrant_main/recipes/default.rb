@@ -122,12 +122,7 @@ execute "mysql-vagrant-user" do
 end
 
 # Initialize sites data bag
-sites = []
-begin
-	sites = data_bag('sites')
-rescue
-	puts "Sites data bag is empty"
-end
+sites = data_bag('sites')
 
 sites.each do |name|
 	if name == nil
